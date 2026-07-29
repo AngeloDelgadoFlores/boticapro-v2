@@ -16,7 +16,7 @@ body{font-family:'Inter',sans-serif}
 <!-- CONFIG - PEGA AQUI TUS CLAVES -->
 <script>
 const SUPABASE_URL = "https://sfkngmuxpogagrxhwvna.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNma25nbXV4cG9nYWdyeGh3dnZuYSIsInJvbGUiOiJhbm9uIiwiaWF0IjoxNzIyMTIxNjI1NiwxMjViIiwieXhwIjoyMDM3Nzg5MjI1Nn0.RdQm8XYTUYb2oYGCDuJgpU1EA";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNma25nbXV4cG9nYWdyeGh2d25hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUxNzc1MDUsImV4cCI6MjEwMDc1MzUwNX0.U0u52nzDAQzYb9MF5-_Rd0m8XUTYb2oYGCDuJqpUlEA";
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 </script>
 
@@ -106,15 +106,23 @@ let ALMACENES=[], PRODUCTOS=[], LOTES=[], INVENTARIO=[], FILTRO_ALM='TODOS';
 
 async function init(){
  try{
+  console.log('Probando conexión a:', SUPABASE_URL);
   const {data, error} = await supabaseClient.from('almacenes').select('*').limit(1);
+  console.log('Respuesta almacenes:', data, error);
   if(error) throw error;
   document.getElementById('connStatus').innerText='🟢 Conectado Supabase';
   document.getElementById('connStatus').className='text-xs px-2 py-1 rounded-full bg-emerald-100 text-emerald-700';
   await cargarTodo();
  }catch(e){
-  document.getElementById('connStatus').innerText='🔴 Error: '+e.message;
-  document.getElementById('connStatus').className='text-xs px-2 py-1 rounded-full bg-red-100 text-red-700';
-  console.error(e);
+  console.error('ERROR COMPLETO:', e);
+  let msg = e.message || JSON.stringify(e);
+  // Detecta errores típicos
+  if(msg.includes('Failed to fetch')) msg = 'Failed to fetch: URL o KEY mala, o proyecto pausado. Revisa Supabase.';
+  if(msg.includes('JWT')) msg = 'KEY inválida: copia de nuevo el anon key.';
+  if(msg.includes('relation') && msg.includes('does not exist')) msg = 'Tablas no existen: ejecuta el SQL fix_supabase.sql';
+  document.getElementById('connStatus').innerText='🔴 Error: '+msg;
+  document.getElementById('connStatus').className='text-xs px-2 py-1 rounded-full bg-red-100 text-red-700 max-w-[400px] text-[10px]';
+  document.getElementById('connStatus').title = JSON.stringify(e);
  }
 }
 
