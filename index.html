@@ -3,31 +3,72 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>BoticaPRO v2.0 - Multi-Almacén Supabase</title>
+<title>BoticaPRO v2.0 - FINAL</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-<style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
-body{font-family:'Inter',sans-serif}
-</style>
+<style>@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');body{font-family:'Inter',sans-serif}</style>
 </head>
 <body class="bg-[#f8fafc] min-h-screen">
-<!-- CONFIG - PEGA AQUI TUS CLAVES -->
+
+<!-- MODAL CONFIG - PIDE LAS KEYS SIN EDITAR CODIGO -->
+<div id="configModal" class="fixed inset-0 z-[100] bg-black/50 flex items-center justify-center p-4">
+  <div class="bg-white rounded-[24px] p-8 max-w-md w-full shadow-2xl">
+    <h2 class="text-xl font-bold mb-2">🔑 Conectar Supabase</h2>
+    <p class="text-sm text-gray-500 mb-4">Pega tus datos una sola vez. Queda guardado.</p>
+    <div class="space-y-3">
+      <div><label class="text-xs font-semibold">Project URL</label><input id="cfgUrl" class="w-full mt-1 px-4 py-3 rounded-xl border text-xs" value="https://sfkngmuxpogagrxhwvna.supabase.co" placeholder="https://xxx.supabase.co"></div>
+      <div><label class="text-xs font-semibold">Anon Public Key (click Copy en Supabase)</label><textarea id="cfgKey" rows="4" class="w-full mt-1 px-4 py-3 rounded-xl border text-[11px]" placeholder="eyJhbGci..."></textarea></div>
+      <p id="cfgMsg" class="text-xs text-red-500"></p>
+      <button onclick="guardarConfig()" class="w-full bg-emerald-500 text-white py-3 rounded-xl font-bold">Conectar y Guardar</button>
+      <p class="text-[11px] text-gray-400">Tu URL: https://sfkngmuxpogagrxhwvna.supabase.co - solo falta la key larga. Ve a Settings > API Keys > anon public > Copy</p>
+    </div>
+  </div>
+</div>
+
 <script>
-const SUPABASE_URL = "https://sfkngmuxpogagrxhwvna.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNma25nbXV4cG9nYWdyeGh2d25hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUxNzc1MDUsImV4cCI6MjEwMDc1MzUwNX0.U0u52nzDAQzYb9MF5-_Rd0m8XUTYb2oYGCDuJqpUlEA";
-const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+let SUPABASE_URL = localStorage.getItem('sb_url') || "https://sfkngmuxpogagrxhwvna.supabase.co";
+let SUPABASE_ANON_KEY = localStorage.getItem('sb_key') || "";
+let supabaseClient = null;
+
+function checkConfig(){
+  const url = localStorage.getItem('sb_url');
+  const key = localStorage.getItem('sb_key');
+  if(!url || !key || key.length < 100){
+    document.getElementById('configModal').classList.remove('hidden');
+    document.getElementById('cfgUrl').value = url || SUPABASE_URL;
+    document.getElementById('cfgKey').value = key || "";
+  } else {
+    SUPABASE_URL = url;
+    SUPABASE_ANON_KEY = key;
+    supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    document.getElementById('configModal').classList.add('hidden');
+    init();
+  }
+}
+
+function guardarConfig(){
+  const url = document.getElementById('cfgUrl').value.trim();
+  const key = document.getElementById('cfgKey').value.trim();
+  if(!url.includes('supabase.co')){ document.getElementById('cfgMsg').innerText='URL debe ser https://xxx.supabase.co'; return; }
+  if(key.length < 100 || !key.startsWith('eyJ')){ document.getElementById('cfgMsg').innerText='Key inválida. Debe empezar con eyJ y ser muy larga. Dale al botón Copy en Supabase.'; return; }
+  if(key.includes(' ') || key.includes('\n')){ document.getElementById('cfgMsg').innerText='Key tiene espacios o saltos. Pega directo del botón Copy.'; return; }
+  localStorage.setItem('sb_url', url);
+  localStorage.setItem('sb_key', key);
+  location.reload();
+}
+
+function borrarConfig(){ localStorage.removeItem('sb_url'); localStorage.removeItem('sb_key'); location.reload(); }
 </script>
 
 <div id="app">
 <header class="sticky top-0 z-30 bg-white border-b px-4 md:px-6 py-3 flex justify-between items-center">
   <div class="flex items-center gap-3">
     <div class="w-9 h-9 bg-emerald-500 rounded-xl flex items-center justify-center"><i class="fas fa-pills text-white"></i></div>
-    <div><h1 class="font-bold leading-none">BoticaPRO</h1><p class="text-[11px] text-emerald-600 font-bold">V2.0 • MULTI • SUPABASE</p></div>
+    <div><h1 class="font-bold leading-none">BoticaPRO</h1><p class="text-[11px] text-emerald-600 font-bold">V2.0 • MULTI</p></div>
     <select id="filtroAlmacenGlobal" onchange="cambiarAlmacenGlobal()" class="ml-6 px-3 py-2 rounded-xl border bg-gray-50 text-sm font-semibold"><option value="TODOS">🌎 Todos los almacenes</option></select>
   </div>
-  <div class="flex items-center gap-3"><span id="connStatus" class="text-xs px-2 py-1 rounded-full bg-amber-100">Conectando...</span><button onclick="location.reload()" class="w-8 h-8 bg-gray-100 rounded-full"><i class="fas fa-rotate text-sm"></i></button></div>
+  <div class="flex items-center gap-3"><span id="connStatus" class="text-xs px-2 py-1 rounded-full bg-amber-100">Conectando...</span><button onclick="borrarConfig()" class="text-[10px] bg-gray-100 px-2 py-1 rounded-full">Cambiar Key</button></div>
 </header>
 
 <div class="flex">
@@ -40,16 +81,16 @@ const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
       <button onclick="tab('productos')" class="tabBtn w-full text-left px-3 py-2.5 rounded-xl hover:bg-gray-50"><i class="fas fa-pills w-5"></i>Productos</button>
       <button onclick="tab('logs')" class="tabBtn w-full text-left px-3 py-2.5 rounded-xl hover:bg-gray-50"><i class="fas fa-history w-5"></i>Logs</button>
     </nav>
-    <div class="mt-6 p-3 bg-emerald-50 rounded-xl text-xs">✅ <b>Supabase Conectado</b><br>Ya no es Sheet, ahora vuela.</div>
+    <div class="mt-6 p-3 bg-emerald-50 rounded-xl text-xs">✅ Si ves esto y no el modal, ya conectó.</div>
   </aside>
 
   <main class="flex-1 p-4 md:p-6">
     <div id="tab-dashboard">
       <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-        <div class="bg-white p-5 rounded-2xl border"><p class="text-xs text-gray-500">Stock Total</p><p class="text-2xl font-bold" id="kpiStock">0</p><p class="text-[11px] text-gray-400" id="kpiAlmacen">Todos</p></div>
+        <div class="bg-white p-5 rounded-2xl border"><p class="text-xs text-gray-500">Stock Total</p><p class="text-2xl font-bold" id="kpiStock">0</p></div>
         <div class="bg-white p-5 rounded-2xl border"><p class="text-xs text-gray-500">Productos</p><p class="text-2xl font-bold" id="kpiProd">0</p></div>
         <div class="bg-white p-5 rounded-2xl border"><p class="text-xs text-gray-500">Almacenes</p><p class="text-2xl font-bold" id="kpiAlm">0</p></div>
-        <div class="bg-white p-5 rounded-2xl border bg-red-50"><p class="text-xs text-red-600">Por vencer 30d</p><p class="text-2xl font-bold text-red-600" id="kpiRojo">0</p></div>
+        <div class="bg-white p-5 rounded-2xl border bg-red-50"><p class="text-xs text-red-600">Por vencer</p><p class="text-2xl font-bold text-red-600" id="kpiRojo">0</p></div>
       </div>
       <div class="grid md:grid-cols-2 gap-4">
         <div class="bg-white rounded-2xl border p-5"><h3 class="font-bold mb-3">Stock por almacén</h3><div id="stockPorAlm" class="space-y-2 text-sm"></div></div>
@@ -94,11 +135,8 @@ const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 </div>
 </div>
 
-<!-- MODALES -->
 <div id="modalAlm" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4"><div onclick="closeModal('modalAlm')" class="absolute inset-0 bg-black/30"></div><div class="relative bg-white rounded-2xl p-6 w-full max-w-md"><h3 class="font-bold mb-3">Nueva Tienda / Almacén</h3><input id="aNombre" placeholder="Ej: Tienda 2 - Barranca" class="w-full px-3 py-2.5 rounded-xl border mb-2"><select id="aTipo" class="w-full px-3 py-2.5 rounded-xl border mb-3"><option value="tienda">Tienda</option><option value="central">Central</option></select><button onclick="guardarAlmacen()" class="w-full bg-emerald-500 text-white py-2.5 rounded-xl">Guardar</button><button onclick="closeModal('modalAlm')" class="w-full mt-2 bg-gray-100 py-2.5 rounded-xl">Cancelar</button></div></div>
-
-<div id="modalProd" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4"><div onclick="closeModal('modalProd')" class="absolute inset-0 bg-black/30"></div><div class="relative bg-white rounded-2xl p-6 w-full max-w-md"><h3 class="font-bold mb-3">Nuevo Producto</h3><input id="pNombre" placeholder="Nombre" class="w-full px-3 py-2.5 rounded-xl border mb-2"><input id="pCat" placeholder="Categoría (Ej: Analgésico)" class="w-full px-3 py-2.5 rounded-xl border mb-2"><input id="pLab" placeholder="Laboratorio" class="w-full px-3 py-2.5 rounded-xl border mb-2"><input id="pMin" type="number" placeholder="Stock mínimo" class="w-full px-3 py-2.5 rounded-xl border mb-3"><button onclick="guardarProducto()" class="w-full bg-emerald-500 text-white py-2.5 rounded-xl">Guardar</button><button onclick="closeModal('modalProd')" class="w-full mt-2 bg-gray-100 py-2.5 rounded-xl">Cancelar</button></div></div>
-
+<div id="modalProd" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4"><div onclick="closeModal('modalProd')" class="absolute inset-0 bg-black/30"></div><div class="relative bg-white rounded-2xl p-6 w-full max-w-md"><h3 class="font-bold mb-3">Nuevo Producto</h3><input id="pNombre" placeholder="Nombre" class="w-full px-3 py-2.5 rounded-xl border mb-2"><input id="pCat" placeholder="Categoría" class="w-full px-3 py-2.5 rounded-xl border mb-2"><input id="pLab" placeholder="Laboratorio" class="w-full px-3 py-2.5 rounded-xl border mb-2"><input id="pMin" type="number" placeholder="Stock mínimo" class="w-full px-3 py-2.5 rounded-xl border mb-3"><button onclick="guardarProducto()" class="w-full bg-emerald-500 text-white py-2.5 rounded-xl">Guardar</button><button onclick="closeModal('modalProd')" class="w-full mt-2 bg-gray-100 py-2.5 rounded-xl">Cancelar</button></div></div>
 <div id="modalLote" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4"><div onclick="closeModal('modalLote')" class="absolute inset-0 bg-black/30"></div><div class="relative bg-white rounded-2xl p-6 w-full max-w-md"><h3 class="font-bold mb-3">Ingresar Lote</h3><select id="lAlmacen" class="w-full px-3 py-2.5 rounded-xl border mb-2"></select><select id="lProd" class="w-full px-3 py-2.5 rounded-xl border mb-2"></select><select id="lTipo" class="w-full px-3 py-2.5 rounded-xl border mb-2"><option>Compra</option><option>Bonificacion</option><option>Muestra</option><option>Emergencia</option><option>Devolucion</option></select><input id="lCodigo" placeholder="Código Lote" class="w-full px-3 py-2.5 rounded-xl border mb-2"><input id="lCant" type="number" placeholder="Cantidad" class="w-full px-3 py-2.5 rounded-xl border mb-2"><input id="lVenc" type="date" class="w-full px-3 py-2.5 rounded-xl border mb-2"><input id="lCosto" type="number" placeholder="Costo (0 si bonificación)" class="w-full px-3 py-2.5 rounded-xl border mb-2"><p id="loteMsg" class="text-xs text-red-500"></p><button onclick="guardarLote()" class="w-full bg-gray-900 text-white py-2.5 rounded-xl mt-2">Guardar Lote</button><button onclick="closeModal('modalLote')" class="w-full mt-2 bg-gray-100 py-2.5 rounded-xl">Cancelar</button></div></div>
 
 <script>
@@ -106,23 +144,19 @@ let ALMACENES=[], PRODUCTOS=[], LOTES=[], INVENTARIO=[], FILTRO_ALM='TODOS';
 
 async function init(){
  try{
-  console.log('Probando conexión a:', SUPABASE_URL);
+  document.getElementById('connStatus').innerText='Conectando...';
   const {data, error} = await supabaseClient.from('almacenes').select('*').limit(1);
-  console.log('Respuesta almacenes:', data, error);
   if(error) throw error;
   document.getElementById('connStatus').innerText='🟢 Conectado Supabase';
   document.getElementById('connStatus').className='text-xs px-2 py-1 rounded-full bg-emerald-100 text-emerald-700';
   await cargarTodo();
  }catch(e){
-  console.error('ERROR COMPLETO:', e);
+  console.error(e);
   let msg = e.message || JSON.stringify(e);
-  // Detecta errores típicos
-  if(msg.includes('Failed to fetch')) msg = 'Failed to fetch: URL o KEY mala, o proyecto pausado. Revisa Supabase.';
-  if(msg.includes('JWT')) msg = 'KEY inválida: copia de nuevo el anon key.';
-  if(msg.includes('relation') && msg.includes('does not exist')) msg = 'Tablas no existen: ejecuta el SQL fix_supabase.sql';
+  if(msg.includes('Failed to fetch')) msg = 'Failed to fetch: Proyecto pausado o Key mala. Borra config y pega de nuevo con botón Copy.';
   document.getElementById('connStatus').innerText='🔴 Error: '+msg;
-  document.getElementById('connStatus').className='text-xs px-2 py-1 rounded-full bg-red-100 text-red-700 max-w-[400px] text-[10px]';
-  document.getElementById('connStatus').title = JSON.stringify(e);
+  document.getElementById('connStatus').className='text-xs px-2 py-1 rounded-full bg-red-100 text-red-700';
+  document.getElementById('configModal').classList.remove('hidden');
  }
 }
 
@@ -132,6 +166,7 @@ async function cargarTodo(){
    supabaseClient.from('productos').select('*').order('created_at', {ascending:false}),
    supabaseClient.from('lotes').select('*, productos(nombre), almacenes(nombre)').order('created_at', {ascending:false})
  ]);
+ if(alm.error) throw alm.error;
  ALMACENES = alm.data || [];
  PRODUCTOS = prod.data || [];
  LOTES = lotes.data || [];
@@ -160,70 +195,47 @@ function renderSelects(){
 function calcularInventario(){
  let filtradoLotes = FILTRO_ALM==='TODOS' ? LOTES : LOTES.filter(l=>l.almacen_id===FILTRO_ALM);
  let map={};
- PRODUCTOS.forEach(p=>{ map[p.id]={...p, stock_total:0, stock_por_almacen:{}, lotes:[], prox_venc:null, estado_venc:'sin-lote'} });
+ PRODUCTOS.forEach(p=>{ map[p.id]={...p, stock_total:0, stock_por_almacen:{}, lotes:[], prox_venc:null} });
  filtradoLotes.forEach(l=>{
    if(!map[l.producto_id]) return;
    map[l.producto_id].stock_total+=l.cantidad;
-   let almId=l.almacen_id;
-   map[l.producto_id].stock_por_almacen[almId]=(map[l.producto_id].stock_por_almacen[almId]||0)+l.cantidad;
-   map[l.producto_id].lotes.push({lote:l.lote_codigo, cant:l.cantidad, venc:l.vencimiento, almacen:l.almacenes?.nombre||l.almacen_id, tipo:l.tipo_ingreso});
-   let venc=new Date(l.vencimiento);
-   if(!map[l.producto_id].prox_venc || venc < new Date(map[l.producto_id].prox_venc)) map[l.producto_id].prox_venc=l.vencimiento;
+   map[l.producto_id].stock_por_almacen[l.almacen_id]=(map[l.producto_id].stock_por_almacen[l.almacen_id]||0)+l.cantidad;
+   map[l.producto_id].lotes.push({lote:l.lote_codigo, cant:l.cantidad, venc:l.vencimiento, almacen:l.almacenes?.nombre||''});
+   if(!map[l.producto_id].prox_venc || new Date(l.vencimiento) < new Date(map[l.producto_id].prox_venc)) map[l.producto_id].prox_venc=l.vencimiento;
  });
  INVENTARIO=Object.values(map);
- let total=INVENTARIO.reduce((s,p)=>s+p.stock_total,0);
- let rojo=INVENTARIO.filter(p=>{
-   if(!p.prox_venc) return false;
-   let diff=Math.ceil((new Date(p.prox_venc)-new Date())/(1000*60*60*24));
-   return diff<=30;
- }).length;
- document.getElementById('kpiStock').innerText=total;
+ document.getElementById('kpiStock').innerText=INVENTARIO.reduce((s,p)=>s+p.stock_total,0);
  document.getElementById('kpiProd').innerText=PRODUCTOS.length;
- document.getElementById('kpiRojo').innerText=rojo;
- document.getElementById('kpiAlmacen').innerText=FILTRO_ALM==='TODOS'?'Todos':(ALMACENES.find(a=>a.id===FILTRO_ALM)?.nombre||'');
- // por almacen
- let porAlm={};
- LOTES.forEach(l=>{ porAlm[l.almacen_id]=(porAlm[l.almacen_id]||0)+l.cantidad });
- document.getElementById('stockPorAlm').innerHTML=Object.entries(porAlm).map(([id,cant])=>`<div class="flex justify-between"><span>${ALMACENES.find(a=>a.id===id)?.nombre||id}</span><b>${cant}</b></div>`).join('')||'Sin stock';
+ let porAlm={}; LOTES.forEach(l=>{ porAlm[l.almacen_id]=(porAlm[l.almacen_id]||0)+l.cantidad });
+ document.getElementById('stockPorAlm').innerHTML=Object.entries(porAlm).map(([id,cant])=>`<div class="flex justify-between"><span>${ALMACENES.find(a=>a.id===id)?.nombre||id.slice(0,8)}</span><b>${cant}</b></div>`).join('')||'Sin stock';
  renderTabla();
 }
 
 function renderTabla(){
  let html='';
  INVENTARIO.forEach(p=>{
-   let porAlm=Object.entries(p.stock_por_almacen).map(([almId,cant])=>{
-     let nom=ALMACENES.find(a=>a.id===almId)?.nombre||almId.slice(0,8);
-     return `<span class="bg-gray-100 px-1.5 py-0.5 rounded text-[10px] mr-1">${nom}: ${cant}</span>`;
-   }).join('');
-   let lotesStr=p.lotes.map(l=>`${l.lote} (${l.cant}) <span class="text-[10px] bg-emerald-50 px-1 rounded">${l.almacen}</span>`).join('<br>');
-   html+=`<tr class="border-t"><td class="p-3"><div class="font-semibold">${p.nombre}</div><div class="text-[11px] text-gray-500">${p.categoria_nombre||''}</div></td><td class="p-3 font-bold">${p.stock_total}</td><td class="p-3">${porAlm||'Sin stock'}</td><td class="p-3">${p.prox_venc||'-'}</td><td class="p-3 text-[11px]">${lotesStr}</td></tr>`;
+   let porAlm=Object.entries(p.stock_por_almacen).map(([almId,cant])=>`<span class="bg-gray-100 px-1.5 py-0.5 rounded text-[10px] mr-1">${ALMACENES.find(a=>a.id===almId)?.nombre||almId.slice(0,8)}: ${cant}</span>`).join('');
+   let lotesStr=p.lotes.map(l=>`${l.lote} (${l.cant})`).join('<br>');
+   html+=`<tr class="border-t"><td class="p-3"><div class="font-semibold">${p.nombre}</div></td><td class="p-3 font-bold">${p.stock_total}</td><td class="p-3">${porAlm||'Sin stock'}</td><td class="p-3">${p.prox_venc||'-'}</td><td class="p-3 text-[11px]">${lotesStr}</td></tr>`;
  });
  document.getElementById('tablaInv').innerHTML=html||'<tr><td colspan=5 class="p-6 text-center text-gray-400">Sin productos</td></tr>';
 }
 
 function cambiarAlmacenGlobal(){ FILTRO_ALM=document.getElementById('filtroAlmacenGlobal').value; calcularInventario(); }
-
-function tab(nombre, el){
+function tab(nombre){
  document.querySelectorAll('[id^="tab-"]').forEach(d=>d.classList.add('hidden'));
  document.getElementById('tab-'+nombre).classList.remove('hidden');
- document.querySelectorAll('.tabBtn').forEach(b=>b.classList.remove('bg-emerald-50','text-emerald-700','font-semibold'));
- if(el) el.classList.add('bg-emerald-50','text-emerald-700','font-semibold');
 }
-
 async function guardarAlmacen(){
  let nombre=document.getElementById('aNombre').value;
  let tipo=document.getElementById('aTipo').value;
- if(!nombre) return alert('Nombre');
  let {error}=await supabaseClient.from('almacenes').insert({nombre,tipo});
  if(error) alert(error.message); else { closeModal('modalAlm'); cargarTodo(); }
 }
 async function guardarProducto(){
  let nombre=document.getElementById('pNombre').value;
  let cat=document.getElementById('pCat').value;
- let lab=document.getElementById('pLab').value;
- let min=document.getElementById('pMin').value;
- if(!nombre) return alert('Nombre');
- let {error}=await supabaseClient.from('productos').insert({nombre,categoria_nombre:cat,laboratorio:lab,stock_minimo:parseInt(min)||5});
+ let {error}=await supabaseClient.from('productos').insert({nombre,categoria_nombre:cat,stock_minimo:5});
  if(error) alert(error.message); else { closeModal('modalProd'); cargarTodo(); }
 }
 async function guardarLote(){
@@ -238,7 +250,7 @@ async function guardarLote(){
  let {error}=await supabaseClient.from('lotes').insert({almacen_id,producto_id,lote_codigo,cantidad,vencimiento,tipo_ingreso,costo_unitario:costo});
  if(error) document.getElementById('loteMsg').innerText=error.message;
  else {
-   await supabaseClient.from('movimientos').insert({tipo:'ENTRADA',producto_id,lote_codigo,cantidad,origen_almacen_id:null,destino_almacen_id:almacen_id,motivo:tipo_ingreso});
+   await supabaseClient.from('movimientos').insert({tipo:'ENTRADA',producto_id,lote_codigo,cantidad,destino_almacen_id:almacen_id,motivo:tipo_ingreso});
    closeModal('modalLote'); cargarTodo();
  }
 }
@@ -246,7 +258,7 @@ async function cargarLotesTransfer(){
  let producto_id=document.getElementById('tProd').value;
  let origen=document.getElementById('tOrigen').value;
  let {data}=await supabaseClient.from('lotes').select('*').eq('producto_id',producto_id).eq('almacen_id',origen).gt('cantidad',0);
- document.getElementById('tLote').innerHTML=(data||[]).map(l=>`<option value="${l.id}|${l.lote_codigo}">${l.lote_codigo} - ${l.cantidad} unid - vence ${l.vencimiento} (${l.tipo_ingreso})</option>`).join('')||'<option>Sin stock en origen</option>';
+ document.getElementById('tLote').innerHTML=(data||[]).map(l=>`<option value="${l.id}|${l.lote_codigo}">${l.lote_codigo} - ${l.cantidad} unid - ${l.vencimiento}</option>`).join('')||'<option>Sin stock en origen</option>';
 }
 async function hacerTransferencia(){
  let origen=document.getElementById('tOrigen').value;
@@ -254,39 +266,24 @@ async function hacerTransferencia(){
  let prod=document.getElementById('tProd').value;
  let loteVal=document.getElementById('tLote').value;
  let cant=parseInt(document.getElementById('tCant').value);
- let obs=document.getElementById('tObs').value;
  if(origen===destino) return document.getElementById('tMsg').innerText='Origen y destino no pueden ser iguales';
- if(!loteVal.includes('|')) return document.getElementById('tMsg').innerText='Selecciona lote';
  let [loteId, loteCodigo]=loteVal.split('|');
- if(!cant) return document.getElementById('tMsg').innerText='Cantidad';
- // 1. obtener lote origen
  let {data:origenLote} = await supabaseClient.from('lotes').select('*').eq('id',loteId).single();
- if(!origenLote || origenLote.cantidad < cant) return document.getElementById('tMsg').innerText='Stock insuficiente en origen. Tienes '+ (origenLote?.cantidad||0);
- // 2. restar origen
+ if(!origenLote || origenLote.cantidad < cant) return document.getElementById('tMsg').innerText='Stock insuficiente. Tienes '+ (origenLote?.cantidad||0);
  await supabaseClient.from('lotes').update({cantidad: origenLote.cantidad - cant}).eq('id', loteId);
- // 3. sumar o crear en destino
  let {data:destLote} = await supabaseClient.from('lotes').select('*').eq('almacen_id',destino).eq('producto_id',prod).eq('lote_codigo',loteCodigo).maybeSingle();
- if(destLote){
-   await supabaseClient.from('lotes').update({cantidad: destLote.cantidad + cant}).eq('id', destLote.id);
- } else {
-   await supabaseClient.from('lotes').insert({almacen_id:destino, producto_id:prod, lote_codigo:loteCodigo, cantidad:cant, vencimiento:origenLote.vencimiento, tipo_ingreso:origenLote.tipo_ingreso, costo_unitario:origenLote.costo_unitario});
- }
- // 4. movimientos
- await supabaseClient.from('movimientos').insert([
-   {tipo:'TRANSFERENCIA_SALIDA',producto_id:prod,lote_codigo:loteCodigo,cantidad:cant,origen_almacen_id:origen,destino_almacen_id:destino,motivo:obs},
-   {tipo:'TRANSFERENCIA_ENTRADA',producto_id:prod,lote_codigo:loteCodigo,cantidad:cant,origen_almacen_id:origen,destino_almacen_id:destino,motivo:obs}
- ]);
- document.getElementById('tMsg').innerText='✅ Transferencia OK: '+cant+' de '+ALMACENES.find(a=>a.id===origen)?.nombre+' a '+ALMACENES.find(a=>a.id===destino)?.nombre;
+ if(destLote){ await supabaseClient.from('lotes').update({cantidad: destLote.cantidad + cant}).eq('id', destLote.id); }
+ else { await supabaseClient.from('lotes').insert({almacen_id:destino, producto_id:prod, lote_codigo:loteCodigo, cantidad:cant, vencimiento:origenLote.vencimiento, tipo_ingreso:origenLote.tipo_ingreso}); }
+ await supabaseClient.from('movimientos').insert({tipo:'TRANSFERENCIA',producto_id:prod,lote_codigo:loteCodigo,cantidad:cant,origen_almacen_id:origen,destino_almacen_id:destino,motivo:document.getElementById('tObs').value});
+ document.getElementById('tMsg').innerText='✅ Transferencia OK';
  cargarTodo();
 }
-
 async function cargarLogs(){
  let {data}=await supabaseClient.from('movimientos').select('*, productos(nombre)').order('created_at',{ascending:false}).limit(100);
- document.getElementById('listaLogs').innerHTML=(data||[]).map(m=>`<div class="flex gap-2 py-1 border-b text-xs"><span class="text-gray-400">${new Date(m.created_at).toLocaleString()}</span><b>${m.tipo}</b><span>${m.productos?.nombre||''} ${m.lote_codigo} x${m.cantidad}</span><span class="text-gray-500">${ALMACENES.find(a=>a.id===m.origen_almacen_id)?.nombre||''} → ${ALMACENES.find(a=>a.id===m.destino_almacen_id)?.nombre||''} | ${m.motivo||''}</span></div>`).join('')||'Sin movimientos';
- document.getElementById('ultimasTrans').innerHTML=(data||[]).filter(m=>m.tipo.includes('TRANSFERENCIA')).slice(0,5).map(m=>`<div class="p-2 bg-gray-50 rounded-xl"><b>${m.productos?.nombre}</b> ${m.lote_codigo} x${m.cantidad}<br><span class="text-xs">${ALMACENES.find(a=>a.id===m.origen_almacen_id)?.nombre||''} ➡️ ${ALMACENES.find(a=>a.id===m.destino_almacen_id)?.nombre}</span></div>`).join('')||'Sin transferencias';
- document.getElementById('histTrans').innerHTML=(data||[]).filter(m=>m.tipo.includes('TRANSFERENCIA')).map(m=>`<div>${new Date(m.created_at).toLocaleString()} - ${m.lote_codigo} x${m.cantidad} | ${ALMACENES.find(a=>a.id===m.origen_almacen_id)?.nombre||''} -> ${ALMACENES.find(a=>a.id===m.destino_almacen_id)?.nombre||''}</div>`).join('')||'Sin movimientos';
+ document.getElementById('listaLogs').innerHTML=(data||[]).map(m=>`<div class="flex gap-2 py-1 border-b text-xs"><span class="text-gray-400">${new Date(m.created_at).toLocaleString()}</span><b>${m.tipo}</b><span>${m.productos?.nombre||''} ${m.lote_codigo} x${m.cantidad}</span></div>`).join('')||'Sin movimientos';
+ document.getElementById('ultimasTrans').innerHTML=(data||[]).filter(m=>m.tipo.includes('TRANSFERENCIA')).slice(0,5).map(m=>`<div class="p-2 bg-gray-50 rounded-xl"><b>${m.productos?.nombre}</b> ${m.lote_codigo} x${m.cantidad}</div>`).join('')||'Sin transferencias';
+ document.getElementById('histTrans').innerHTML=(data||[]).filter(m=>m.tipo.includes('TRANSFERENCIA')).map(m=>`<div>${new Date(m.created_at).toLocaleString()} - ${m.lote_codigo} x${m.cantidad}</div>`).join('')||'Sin movimientos';
 }
-
 function openModal(id){document.getElementById(id).classList.remove('hidden');}
 function closeModal(id){document.getElementById(id).classList.add('hidden');}
 function filtrar(){
@@ -294,17 +291,14 @@ function filtrar(){
  let filtrado=INVENTARIO.filter(p=>p.nombre.toLowerCase().includes(q));
  let html='';
  filtrado.forEach(p=>{
-   let porAlm=Object.entries(p.stock_por_almacen).map(([almId,cant])=>{
-     let nom=ALMACENES.find(a=>a.id===almId)?.nombre||almId.slice(0,8);
-     return `<span class="bg-gray-100 px-1.5 py-0.5 rounded text-[10px] mr-1">${nom}: ${cant}</span>`;
-   }).join('');
-   let lotesStr=p.lotes.map(l=>`${l.lote} (${l.cant})`).join('<br>');
-   html+=`<tr class="border-t"><td class="p-3"><div class="font-semibold">${p.nombre}</div></td><td class="p-3 font-bold">${p.stock_total}</td><td class="p-3">${porAlm}</td><td class="p-3">${p.prox_venc||'-'}</td><td class="p-3 text-[11px]">${lotesStr}</td></tr>`;
+   let porAlm=Object.entries(p.stock_por_almacen).map(([almId,cant])=>`<span class="bg-gray-100 px-1.5 py-0.5 rounded text-[10px] mr-1">${ALMACENES.find(a=>a.id===almId)?.nombre||''}: ${cant}</span>`).join('');
+   html+=`<tr class="border-t"><td class="p-3">${p.nombre}</td><td class="p-3 font-bold">${p.stock_total}</td><td class="p-3">${porAlm}</td><td class="p-3">${p.prox_venc||'-'}</td><td class="p-3 text-[11px]">${p.lotes.map(l=>`${l.lote} (${l.cant})`).join('<br>')}</td></tr>`;
  });
  document.getElementById('tablaInv').innerHTML=html;
 }
 
-init();
+// Inicia
+checkConfig();
 </script>
 </body>
 </html>
