@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>Test directo Supabase</title><script src="https://cdn.tailwindcss.com"></script></head>
+<body class="p-6 bg-gray-50">
+<h1 class="font-bold text-xl mb-4">Test Directo Supabase - Sin librerías</h1>
+<div class="space-y-4 max-w-xl">
+  <div><label class="text-xs font-bold">URL</label><input id="url" class="w-full border p-2 rounded text-xs" value="https://sfkngmuxpogagrxhwvna.supabase.co"></div>
+  <div><label class="text-xs font-bold">Key (sb_publishable_ o eyJ...)</label><textarea id="key" rows="4" class="w-full border p-2 rounded text-[10px]"></textarea></div>
+  <button onclick="probar()" class="bg-emerald-500 text-white px-4 py-2 rounded font-bold">Probar conexión directa</button>
+  <pre id="log" class="bg-white border p-4 rounded text-xs whitespace-pre-wrap max-h-[500px] overflow-auto">Esperando...</pre>
+</div>
+<script>
+async function probar(){
+  const url = document.getElementById('url').value.trim();
+  const key = document.getElementById('key').value.trim();
+  const log = document.getElementById('log');
+  log.textContent = "Probando...\nURL: "+url+"\nKey length: "+key.length+"\nKey start: "+key.substring(0,20)+"\n\n";
+  try{
+    // Test 1: fetch directo
+    log.textContent += "1. GET /rest/v1/almacenes\n";
+    const r = await fetch(url+"/rest/v1/almacenes?select=*&limit=1", {
+      method: "GET",
+      headers: {
+        "apikey": key,
+        "Authorization": "Bearer "+key,
+        "Content-Type": "application/json"
+      }
+    });
+    log.textContent += "   Status: "+r.status+" "+r.statusText+"\n";
+    const txt = await r.text();
+    log.textContent += "   Body: "+txt.substring(0,500)+"\n\n";
+    if(r.ok) log.textContent += "✅ CONEXIÓN OK! El problema es la librería supabase-js vieja. Usa este fetch directo.\n";
+    else log.textContent += "❌ Error de Supabase pero llegó respuesta. Revisa si tablas existen o RLS.\n";
+  }catch(e){
+    log.textContent += "❌ FETCH FALLÓ: "+e.message+"\n";
+    log.textContent += "Stack: "+e.stack+"\n\n";
+    log.textContent += "Causas comunes:\n- AdBlock / Brave Shield bloqueando supabase.co\n- Internet con firewall\n- URL mal escrita\n- Key con espacios\n\nPrueba en incógnito sin extensiones y desactiva Brave Shield si usas Brave.";
+  }
+}
+</script>
+</body></html>
